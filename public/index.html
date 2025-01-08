@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rat1090</title>
+    <script>
+        function renderMap(){
+
+            // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
+            const tileserver = document.querySelector('#tileserver').value;
+            const aircraftjson = document.querySelector('#aircraft_json').value;
+
+            window.localStorage.setItem('config', JSON.stringify({
+                tileserver: tileserver,
+                aircraftjson: aircraftjson
+            }));
+
+            location.href = "/map.html";
+        }
+    </script>
+</head>
+<body>
+    <label for="tileserver">Tileserver URL:</label><input type="text" id="tileserver" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png"><br />
+    <label for="aircraft_json">Aircraft JSON URL:</label><input type="text" id="aircraft_json" value="http://127.0.0.1:1338/aircraft.json?a=b">
+    <button type="submit" onclick="renderMap()">Load Map</button>
+</body>
+</html>
