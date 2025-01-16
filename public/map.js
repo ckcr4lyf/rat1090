@@ -1,5 +1,7 @@
 let markers = [];
-let state = {};
+
+let allTimeState = {}; // all aircraft seen
+let currentState = {}; // aircraft currently in the JSON file
 var map;
 
 const configString = window.localStorage.getItem('config');
@@ -9,43 +11,77 @@ if (configString === undefined) {
 
 const parsedConfig = JSON.parse(configString);
 
+class Aircraft {
+    constructor(dump1090Aircraft){
+        this.hex = dump1090Aircraft.hex;
+
+        if (dump1090Aircraft.flight !== undefined){
+            this.flight = dump1090Aircraft.flight.trim();
+        }
+        
+        this.lat = dump1090Aircraft.lat
+        this.lon = dump1090Aircraft.lon
+        this.messages = dump1090Aircraft.messages
+        this.seen = dump1090Aircraft.seen
+        this.rssi = dump1090Aircraft.rssi
+        this.alt_baro = dump1090Aircraft.alt_baro
+
+        this.added = new Date();
+        this.lastMessage = new Date();
+
+        this.positions = [];
+
+        if (this.lat !== undefined){
+            this.positions.push({
+                lat: this.lat,
+                lon: this.lon,
+                time: Date.now(),
+            });
+        }
+    }
+
+    updateInfo(dump1090Aircraft){
+        if (this.flight == undefined && dump1090Aircraft.flight !== undefined){
+            this.flight = dump1090Aircraft.flight.trim();
+        }
+        this.lat = this.lat ?? dump1090Aircraft.lat
+        this.lon = this.lon ?? dump1090Aircraft.lon
+        this.messages = this.messages ?? dump1090Aircraft.messages
+        this.seen = this.seen ?? dump1090Aircraft.seen
+        this.rssi = this.rssi ?? dump1090Aircraft.rssi
+        this.alt_baro = this.alt_baro ?? dump1090Aircraft.alt_baro
+
+        if (dump1090Aircraft.lat !== undefined){
+            this.positions.push({
+                lat: dump1090Aircraft.lat,
+                lon: dump1090Aircraft.lon,
+                time: Date.now(),
+            });
+        }
+
+        this.lastMessage = new Date();
+    }
+}
+
 const renderNewCraft = async () => {
     // let a = await fetch('http://127.0.0.1:1338/aircraft.json?a=b');
-    let a = await fetch(parsedConfig.aircraftjson);
-    let b = await a.json();
+    let jsonFileResponse = await fetch(parsedConfig.aircraftjson);
+    let dump1090Aircraft = await jsonFileResponse.json();
 
-    let c = b.aircraft.filter(a => a.lat !== undefined).map(a => {
+    let c = dump1090Aircraft.aircraft.filter(a => a.lat !== undefined).map(a => {
         return { x: a.lat, y: a.lon, flight: a.flight, hex: a.hex }
     });
 
-    for (const aircraft of b.aircraft){
-        if (state[aircraft.hex] === undefined){
-            const newAircraft = {
-                hex: aircraft.hex,
-                flight: aircraft.flight,
-                lat: aircraft.lat,
-                lon: aircraft.lon,
-                messages: aircraft.messages,
-                seen: aircraft.seen,
-                rssi: aircraft.rssi,
-                alt_baro: aircraft.alt_baro,
-                added: new Date(),
-            }
+    // Get a list of hex in current aircraft.json
+    const currentFlights = dump1090Aircraft.aircraft.map(ac => ac.hex);
 
-            state[aircraft.hex] = newAircraft;
+    for (const d1090aircraft of dump1090Aircraft.aircraft){
+        if (allTimeState[d1090aircraft.hex] === undefined){
+            const aircraft = new Aircraft(d1090aircraft);
+            allTimeState[d1090aircraft.hex] = aircraft;
+            console.log(`[${d1090aircraft.hex}] New aircraft: ${aircraft.flight}`);
         } else {
-            // sometimes the name can be lost, so only set if previously unknown
-            if (state[aircraft.hex].flight === undefined && aircraft.flight !== undefined){
-                console.log(`[${aircraft.hex}] Got new aircraft name: ${aircraft.flight}`)
-                state[aircraft.hex].flight = aircraft.flight;
-            }
-
-            state[aircraft.hex].lat = aircraft.lat;
-            state[aircraft.hex].lon = aircraft.lon;
-            state[aircraft.hex].messages = aircraft.messages;
-            state[aircraft.hex].seen = aircraft.seen;
-            state[aircraft.hex].rssi = aircraft.rssi;
-            state[aircraft.hex].alt_baro = aircraft.alt_baro;
+            allTimeState[d1090aircraft.hex].updateInfo(d1090aircraft);
         }
     }
 
@@ -53,15 +89,31 @@ const renderNewCraft = async () => {
         marker.remove();
     }
 
-    for (const ac of c) {
-        x = L.marker([ac.x, ac.y]).addTo(map).bindTooltip(state[ac.hex].flight, {
-            permanent: true,
-            direction: 'right'
-        });
-        markers.push(x);
+    currentState = {};
+    for (const hex of currentFlights){
+        currentState[hex] = allTimeState[hex];
+
+        if (allTimeState[hex].lat !== undefined){
+            x = L.marker([allTimeState[hex].lat, allTimeState[hex].lon]).addTo(map).bindTooltip(allTimeState[hex].flight ?? hex, {
+                permanent: true,
+                direction: 'right'
+            });
+            markers.push(x);
+        }
     }
 
-    console.log(state);
+    console.log(`Total aircraft seen: ${Object.keys(allTimeState).length}. Current aircraft: ${Object.keys(currentState).length}`);
+    console.log(currentState);
+
+    // for (const ac of c) {
+    //     x = L.marker([ac.x, ac.y]).addTo(map).bindTooltip(state[ac.hex].flight, {
+    //         permanent: true,
+    //         direction: 'right'
+    //     });
+    //     markers.push(x);
+    // }
+
+    // console.log(state);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
