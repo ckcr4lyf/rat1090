@@ -1,5 +1,10 @@
+const OLDEST_LOCATION = 30 * 1000; // If not received location more than 30 secs, don't render
+
 let markers = [];
 
+/**
+ * @type {Object.<string, Aircraft>}
+ */
 let allTimeState = {}; // all aircraft seen
 let currentState = {}; // aircraft currently in the JSON file
 var map;
@@ -37,6 +42,8 @@ class Aircraft {
                 lon: this.lon,
                 time: Date.now(),
             });
+
+            this.lastLocationTs = Date.now();
         }
     }
 
@@ -57,6 +64,8 @@ class Aircraft {
                 lon: dump1090Aircraft.lon,
                 time: Date.now(),
             });
+
+            this.lastLocationTs = Date.now();
         }
 
         this.lastMessage = new Date();
@@ -90,10 +99,12 @@ const renderNewCraft = async () => {
     }
 
     currentState = {};
+    const now = Date.now();
+
     for (const hex of currentFlights){
         currentState[hex] = allTimeState[hex];
 
-        if (allTimeState[hex].lat !== undefined){
+        if (allTimeState[hex].lat !== undefined && (now - allTimeState[hex].lastLocationTs) < OLDEST_LOCATION){
             x = L.marker([allTimeState[hex].lat, allTimeState[hex].lon]).addTo(map).bindTooltip(allTimeState[hex].flight ?? hex, {
                 permanent: true,
                 direction: 'right'
@@ -104,16 +115,6 @@ const renderNewCraft = async () => {
 
     console.log(`Total aircraft seen: ${Object.keys(allTimeState).length}. Current aircraft: ${Object.keys(currentState).length}`);
     console.log(currentState);
-
-    // for (const ac of c) {
-    //     x = L.marker([ac.x, ac.y]).addTo(map).bindTooltip(state[ac.hex].flight, {
-    //         permanent: true,
-    //         direction: 'right'
-    //     });
-    //     markers.push(x);
-    // }
-
-    // console.log(state);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
