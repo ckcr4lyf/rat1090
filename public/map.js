@@ -7,6 +7,7 @@ let markers = [];
  */
 let allTimeState = {}; // all aircraft seen
 let currentState = {}; // aircraft currently in the JSON file
+let lastMessageCount = 0;
 var map;
 
 const configString = window.localStorage.getItem('config');
@@ -51,12 +52,12 @@ class Aircraft {
         if (this.flight == undefined && dump1090Aircraft.flight !== undefined){
             this.flight = dump1090Aircraft.flight.trim();
         }
-        this.lat = this.lat ?? dump1090Aircraft.lat
-        this.lon = this.lon ?? dump1090Aircraft.lon
-        this.messages = this.messages ?? dump1090Aircraft.messages
-        this.seen = this.seen ?? dump1090Aircraft.seen
-        this.rssi = this.rssi ?? dump1090Aircraft.rssi
-        this.alt_baro = this.alt_baro ?? dump1090Aircraft.alt_baro
+        this.lat = dump1090Aircraft.lat ?? this.lat;
+        this.lon = dump1090Aircraft.lon ?? this.lon;
+        this.messages =  dump1090Aircraft.messages ?? this.messages
+        this.seen =   dump1090Aircraft.seen ?? this.seen
+        this.rssi =  dump1090Aircraft.rssi ?? this.rssi
+        this.alt_baro =  dump1090Aircraft.alt_baro ?? this.alt_baro
 
         if (dump1090Aircraft.lat !== undefined){
             this.positions.push({
@@ -76,6 +77,8 @@ const renderNewCraft = async () => {
     // let a = await fetch('http://127.0.0.1:1338/aircraft.json?a=b');
     let jsonFileResponse = await fetch(parsedConfig.aircraftjson);
     let dump1090Aircraft = await jsonFileResponse.json();
+
+    
 
     let c = dump1090Aircraft.aircraft.filter(a => a.lat !== undefined).map(a => {
         return { x: a.lat, y: a.lon, flight: a.flight, hex: a.hex }
@@ -105,7 +108,7 @@ const renderNewCraft = async () => {
         currentState[hex] = allTimeState[hex];
 
         if (allTimeState[hex].lat !== undefined && (now - allTimeState[hex].lastLocationTs) < OLDEST_LOCATION){
-            x = L.marker([allTimeState[hex].lat, allTimeState[hex].lon]).addTo(map).bindTooltip(allTimeState[hex].flight ?? hex, {
+            x = L.marker([allTimeState[hex].lat, allTimeState[hex].lon]).addTo(map).bindTooltip(`${allTimeState[hex].flight} (${allTimeState[hex].alt_baro}ft)` ?? hex, {
                 permanent: true,
                 direction: 'right'
             });
@@ -113,8 +116,11 @@ const renderNewCraft = async () => {
         }
     }
 
-    console.log(`Total aircraft seen: ${Object.keys(allTimeState).length}. Current aircraft: ${Object.keys(currentState).length}`);
-    console.log(currentState);
+    let newMessageCount = dump1090Aircraft.messages;
+    console.log(`Received: ${newMessageCount - lastMessageCount} messages. Total seen: ${Object.keys(allTimeState).length}. Current: ${Object.keys(currentState).length}`)
+    lastMessageCount = newMessageCount;
+    // console.log(`Total aircraft seen: ${Object.keys(allTimeState).length}. Current aircraft: ${Object.keys(currentState).length}`);
+    // console.log(currentState);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
