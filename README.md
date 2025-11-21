@@ -15,4 +15,8 @@ Mapping thanks to OpenStreetMaps & Leaflet
 
 ## Quickstart
 
-TODO
+```
+npx http-server public/ -p 1337
+```
+
+Then open http://127.0.0.1:1337/ in your browser
