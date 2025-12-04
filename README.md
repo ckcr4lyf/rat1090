@@ -31,7 +31,7 @@ mkdir -p /tmp/dump1090
 ```
 and
 ```
-npx http-server /tmp/dump1090 -p 1338
+npx http-server /tmp/dump1090 -p 1338 --cors
 ```
 
 ### Local Tileserver
