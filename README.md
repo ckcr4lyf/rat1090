@@ -26,7 +26,7 @@ Then open http://127.0.0.1:1337/ in your browser
 We need `dump1090` to write the aircraft to a JSON file and then serve it:
 
 ```
-mkdir -p ~/tmp/dump1090
+mkdir -p /tmp/dump1090
 ./dump1090 --write-json /tmp/dump1090 --interactive
 ```
 and
