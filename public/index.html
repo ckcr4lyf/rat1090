@@ -21,7 +21,7 @@
     </script>
 </head>
 <body>
-    <label for="tileserver">Tileserver URL:</label><input type="text" id="tileserver" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png"><br />
+    <label for="tileserver">Tileserver URL:</label><input type="text" id="tileserver" value="http://localhost:8080/tile/{z}/{x}/{y}.png"> (Example: https://tile.openstreetmap.org/{z}/{x}/{y}.png)<br />
     <label for="aircraft_json">Aircraft JSON URL:</label><input type="text" id="aircraft_json" value="http://127.0.0.1:1338/aircraft.json?a=b">
     <button type="submit" onclick="renderMap()">Load Map</button>
 </body>
