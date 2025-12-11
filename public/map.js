@@ -75,7 +75,7 @@ class Aircraft {
 
 const renderNewCraft = async () => {
     // let a = await fetch('http://127.0.0.1:1338/aircraft.json?a=b');
-    let jsonFileResponse = await fetch(parsedConfig.aircraftjson);
+    let jsonFileResponse = await fetch(`${parsedConfig.aircraftjson}?t=${Date.now()}`);
     let dump1090Aircraft = await jsonFileResponse.json();
 
     
