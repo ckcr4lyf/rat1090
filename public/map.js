@@ -1,4 +1,4 @@
-const OLDEST_LOCATION = 30 * 1000; // If not received location more than 30 secs, don't render
+const OLDEST_LOCATION = 3 * 1000; // If not received location more than 3 secs, don't render
 
 let markers = [];
 
